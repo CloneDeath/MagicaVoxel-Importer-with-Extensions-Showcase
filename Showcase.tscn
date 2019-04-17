@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://xyz.vox" type="ArrayMesh" id=1]
+[ext_resource path="res://xyz6.vox" type="ArrayMesh" id=2]
+
+[node name="Showcase" type="Spatial"]
+
+[node name="xyz5" type="MeshInstance" parent="."]
+mesh = ExtResource( 1 )
+material/0 = null
+
+[node name="xyz6" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0 )
+visible = false
+mesh = ExtResource( 2 )
+material/0 = null
+
