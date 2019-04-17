@@ -6,7 +6,8 @@ const Faces = preload("./Faces.gd");
 const VoxData = preload("./VoxFormat/VoxData.gd");
 const VoxNode = preload("./VoxFormat/VoxNode.gd");
 
-const debug_file = false;
+const debug_file = true;
+const debug_models = true;
 
 func _init():
 	print('MagicaVoxel Importer: Ready')
@@ -131,6 +132,7 @@ func byte_to_basis(data: int):
 func read_chunk(vox: VoxData, file: VoxFile):
 	var chunk_id = file.get_string(4);
 	var chunk_size = file.get_32();
+	#warning-ignore:unused_variable
 	var childChunks = file.get_32()
 
 	file.set_chunk_size(chunk_size);
@@ -153,7 +155,7 @@ func read_chunk(vox: VoxData, file: VoxFile):
 				var c = file.get_8()
 				var voxel = Vector3(x, y, z)
 				model.voxels[voxel] = c - 1
-				if debug_file: print('\t', voxel, ' ', c-1);
+				if debug_file && debug_models: print('\t', voxel, ' ', c-1);
 		'RGBA':
 			vox.colors = []
 			for _i in range(256):
@@ -174,7 +176,9 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			file.get_buffer(8);
 			var num_of_frames = file.get_32();
 			
-			if debug_file: print('nTRN[', node_id, '] -> ', child);
+			if debug_file: 
+				print('nTRN[', node_id, '] -> ', child);
+				if (!attributes.empty()): print('\t', attributes);
 			for _frame in range(num_of_frames):
 				var frame_attributes = file.get_vox_dict();
 				if (frame_attributes.has('_t')):
@@ -195,7 +199,9 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			var num_children = file.get_32();
 			for _c in num_children:
 				node.child_nodes.append(file.get_32());
-			if debug_file: print('nGRP[', node_id, '] -> ', node.child_nodes);
+			if debug_file: 
+				print('nGRP[', node_id, '] -> ', node.child_nodes);
+				if (!attributes.empty()): print('\t', attributes);
 		'nSHP':
 			var node_id = file.get_32();
 			var attributes = file.get_vox_dict();
@@ -206,7 +212,9 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			for _i in range(num_models):
 				node.models.append(file.get_32());
 				file.get_vox_dict();
-			if debug_file: print('nSHP[', node_id,'] -> ', node.models);
+			if debug_file: 
+				print('nSHP[', node_id,'] -> ', node.models);
+				if (!attributes.empty()): print('\t', attributes);
 	file.read_remaining();
 
 func unify_voxels(vox: VoxData):
@@ -249,6 +257,6 @@ func get_voxels(node: VoxNode, vox: VoxData):
 		var child = vox.nodes[child_index];
 		var child_data = get_voxels(child, vox);
 		data.combine_data(child_data);
-	data.rotate(node.rotation);
+	data.rotate(node.rotation.inverse());
 	data.translate(node.translation);
 	return data;

@@ -1,0 +1,14 @@
+[remap]
+
+importer="MagicaVoxel.With.Extensions"
+type="Mesh"
+path="res://.import/dartboard.vox-e8d4ba23b7c6acda65edae59bbdd704b.mesh"
+
+[deps]
+
+source_file="res://dartboard.vox"
+dest_files=[ "res://.import/dartboard.vox-e8d4ba23b7c6acda65edae59bbdd704b.mesh" ]
+
+[params]
+
+Scale=0.1
