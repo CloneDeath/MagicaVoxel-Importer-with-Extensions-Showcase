@@ -6,8 +6,8 @@ const Faces = preload("./Faces.gd");
 const VoxData = preload("./VoxFormat/VoxData.gd");
 const VoxNode = preload("./VoxFormat/VoxNode.gd");
 
-const debug_file = true;
-const debug_models = true;
+const debug_file = false;
+const debug_models = false;
 
 func _init():
 	print('MagicaVoxel Importer: Ready')
