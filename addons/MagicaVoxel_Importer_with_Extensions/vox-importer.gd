@@ -5,8 +5,9 @@ const VoxFile = preload("./VoxFile.gd");
 const Faces = preload("./Faces.gd");
 const VoxData = preload("./VoxFormat/VoxData.gd");
 const VoxNode = preload("./VoxFormat/VoxNode.gd");
+const VoxMaterial = preload("./VoxFormat/VoxMaterial.gd");
 
-const debug_file = false;
+const debug_file = true;
 const debug_models = false;
 
 func _init():
@@ -86,8 +87,9 @@ func import(source_path, destination_path, options, _platforms, _gen_files):
 
 		for t in voxelSides:
 			st.add_vertex(vox_to_godot.xform((t + voxel) * scale))
-		
-	st.generate_normals()
+	
+	st.index();
+	st.generate_normals();
 	
 	var material = SpatialMaterial.new()
 	material.vertex_color_is_srgb = true
@@ -98,8 +100,7 @@ func import(source_path, destination_path, options, _platforms, _gen_files):
 	var mesh = st.commit()
 	
 	var full_path = "%s.%s" % [ destination_path, get_save_extension() ]
-	return ResourceSaver.save(full_path, mesh)
-
+	return ResourceSaver.save(full_path, mesh);
 
 func string_to_vector3(input: String) -> Vector3:
 	var data = input.split_floats(' ');
@@ -215,6 +216,15 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			if debug_file: 
 				print('nSHP[', node_id,'] -> ', node.models);
 				if (!attributes.empty()): print('\t', attributes);
+		'MATL':
+			var material_id = file.get_32();
+			var properties = file.get_vox_dict();
+			vox.materials[material_id] = VoxMaterial.new(properties);
+			if debug_file: 
+				print("MATL ", material_id);
+				print("\t", properties);
+		_:
+			if debug_file: print(chunk_id);
 	file.read_remaining();
 
 func unify_voxels(vox: VoxData):

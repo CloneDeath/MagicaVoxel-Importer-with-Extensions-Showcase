@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://xyz.vox" type="ArrayMesh" id=1]
 [ext_resource path="res://xyz6.vox" type="ArrayMesh" id=2]
 [ext_resource path="res://dartboard.vox" type="ArrayMesh" id=3]
+[ext_resource path="res://material_rod.vox" type="ArrayMesh" id=4]
 
 [node name="Showcase" type="Spatial"]
 
@@ -18,6 +19,11 @@ material/0 = null
 [node name="dartboard" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.45, 0, 0.55 )
 mesh = ExtResource( 3 )
+material/0 = null
+
+[node name="material_rod" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, 0.5 )
+mesh = ExtResource( 4 )
 material/0 = null
 
 [node name="Camera" type="Camera" parent="."]

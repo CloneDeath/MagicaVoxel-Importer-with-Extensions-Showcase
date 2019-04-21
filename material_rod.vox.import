@@ -1,0 +1,14 @@
+[remap]
+
+importer="MagicaVoxel.With.Extensions"
+type="Mesh"
+path="res://.import/material_rod.vox-977dfe4a42da07fae832e48afa95d50d.mesh"
+
+[deps]
+
+source_file="res://material_rod.vox"
+dest_files=[ "res://.import/material_rod.vox-977dfe4a42da07fae832e48afa95d50d.mesh" ]
+
+[params]
+
+Scale=0.1
