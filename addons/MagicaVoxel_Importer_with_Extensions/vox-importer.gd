@@ -70,34 +70,7 @@ func import(source_path, destination_path, options, _platforms, _gen_files):
 	
 	var voxel_data = unify_voxels(vox).data;
 
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-	var vox_to_godot = Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.UP);
-	for voxel in voxel_data:
-		var voxelSides = []
-		if not voxel_data.has(voxel + Vector3.UP): voxelSides += Faces.Top
-		if not voxel_data.has(voxel + Vector3.DOWN): voxelSides += Faces.Bottom
-		if not voxel_data.has(voxel + Vector3.LEFT): voxelSides += Faces.Left
-		if not voxel_data.has(voxel + Vector3.RIGHT): voxelSides += Faces.Right
-		if not voxel_data.has(voxel + Vector3.BACK): voxelSides += Faces.Front
-		if not voxel_data.has(voxel + Vector3.FORWARD): voxelSides += Faces.Back
-		
-		st.add_color(vox.colors[voxel_data[voxel]])
-
-		for t in voxelSides:
-			st.add_vertex(vox_to_godot.xform((t + voxel) * scale))
-	
-	st.index();
-	st.generate_normals();
-	
-	var material = SpatialMaterial.new()
-	material.vertex_color_is_srgb = true
-	material.vertex_color_use_as_albedo = true
-	material.roughness = 1
-	st.set_material(material)
-
-	var mesh = st.commit()
+	var mesh = generate_mesh(vox, voxel_data, scale);
 	
 	var full_path = "%s.%s" % [ destination_path, get_save_extension() ]
 	return ResourceSaver.save(full_path, mesh);
@@ -270,3 +243,52 @@ func get_voxels(node: VoxNode, vox: VoxData):
 	data.rotate(node.rotation.inverse());
 	data.translate(node.translation);
 	return data;
+
+class MeshGenerator:
+	var surfaces = {};
+	
+	func ensure_surface_exists(surface_index: int, color: Color, material: Material):
+		if (surfaces.has(surface_index)): return;
+		
+		var st = SurfaceTool.new();
+		st.begin(Mesh.PRIMITIVE_TRIANGLES);
+		st.add_color(color);
+		st.set_material(material);
+		surfaces[surface_index] = st;
+	
+	func add_vertex(surface_index: int, vertex: Vector3):
+		var st = surfaces[surface_index] as SurfaceTool;
+		st.add_vertex(vertex);
+	
+	func combine_surfaces():
+		var mesh = null;
+		for surface_index in surfaces:
+			var surface = surfaces[surface_index] as SurfaceTool;
+			surface.index();
+			surface.generate_normals();
+			mesh = surface.commit(mesh);
+		return mesh;
+
+func generate_mesh(vox: VoxData, voxel_data, scale):
+	var vox_to_godot = Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.UP);
+	
+	var gen = MeshGenerator.new();
+	
+	for voxel in voxel_data:
+		var voxelSides = []
+		if not voxel_data.has(voxel + Vector3.UP): voxelSides += Faces.Top
+		if not voxel_data.has(voxel + Vector3.DOWN): voxelSides += Faces.Bottom
+		if not voxel_data.has(voxel + Vector3.LEFT): voxelSides += Faces.Left
+		if not voxel_data.has(voxel + Vector3.RIGHT): voxelSides += Faces.Right
+		if not voxel_data.has(voxel + Vector3.BACK): voxelSides += Faces.Front
+		if not voxel_data.has(voxel + Vector3.FORWARD): voxelSides += Faces.Back
+		
+		var surface_index = voxel_data[voxel];
+		var color = vox.colors[surface_index];
+		var material = vox.materials[surface_index].get_material();
+		gen.ensure_surface_exists(surface_index, color, material);
+
+		for t in voxelSides:
+			gen.add_vertex(surface_index, vox_to_godot.xform((t + voxel) * scale));
+
+	return gen.combine_surfaces();
