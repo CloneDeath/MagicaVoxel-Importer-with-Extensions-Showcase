@@ -70,7 +70,8 @@ func import(source_path, destination_path, options, _platforms, _gen_files):
 	
 	var voxel_data = unify_voxels(vox).data;
 
-	var mesh = generate_mesh(vox, voxel_data, scale);
+	var generator = VoxelMeshGenerator.new(vox, voxel_data, scale);
+	var mesh = generator.generate_mesh();
 	
 	var full_path = "%s.%s" % [ destination_path, get_save_extension() ]
 	return ResourceSaver.save(full_path, mesh);
@@ -190,7 +191,7 @@ func read_chunk(vox: VoxData, file: VoxFile):
 				print('nSHP[', node_id,'] -> ', node.models);
 				if (!attributes.empty()): print('\t', attributes);
 		'MATL':
-			var material_id = file.get_32();
+			var material_id = file.get_32() - 1;
 			var properties = file.get_vox_dict();
 			vox.materials[material_id] = VoxMaterial.new(properties);
 			if debug_file: 
@@ -267,28 +268,53 @@ class MeshGenerator:
 			surface.index();
 			surface.generate_normals();
 			mesh = surface.commit(mesh);
+			
+			var new_surface_index = mesh.get_surface_count() - 1;
+			var name = str(surface_index);
+			mesh.surface_set_name(new_surface_index, name);
 		return mesh;
 
-func generate_mesh(vox: VoxData, voxel_data, scale):
-	var vox_to_godot = Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.UP);
+class VoxelMeshGenerator:
+	var vox;
+	var voxel_data = {};
+	var scale:float;
 	
-	var gen = MeshGenerator.new();
+	func _init(vox, voxel_data, scale):
+		self.vox = vox;
+		self.voxel_data = voxel_data;
+		self.scale = scale;
 	
-	for voxel in voxel_data:
-		var voxelSides = []
-		if not voxel_data.has(voxel + Vector3.UP): voxelSides += Faces.Top
-		if not voxel_data.has(voxel + Vector3.DOWN): voxelSides += Faces.Bottom
-		if not voxel_data.has(voxel + Vector3.LEFT): voxelSides += Faces.Left
-		if not voxel_data.has(voxel + Vector3.RIGHT): voxelSides += Faces.Right
-		if not voxel_data.has(voxel + Vector3.BACK): voxelSides += Faces.Front
-		if not voxel_data.has(voxel + Vector3.FORWARD): voxelSides += Faces.Back
-		
+	func get_material(voxel):
 		var surface_index = voxel_data[voxel];
-		var color = vox.colors[surface_index];
-		var material = vox.materials[surface_index].get_material();
-		gen.ensure_surface_exists(surface_index, color, material);
+		return vox.materials[surface_index]
+	
+	func face_is_visible(voxel, face):
+		if (not voxel_data.has(voxel + face)):
+			return true;
+		var local_material = get_material(voxel);
+		var adj_material = get_material(voxel + face);
+		return adj_material.is_glass() && !local_material.is_glass();
 
-		for t in voxelSides:
-			gen.add_vertex(surface_index, vox_to_godot.xform((t + voxel) * scale));
-
-	return gen.combine_surfaces();
+	func generate_mesh():
+		var vox_to_godot = Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.UP);
+		
+		var gen = MeshGenerator.new();
+		
+		for voxel in voxel_data:
+			var voxelSides = []
+			if face_is_visible(voxel, Vector3.UP): voxelSides += Faces.Top
+			if face_is_visible(voxel, Vector3.DOWN): voxelSides += Faces.Bottom
+			if face_is_visible(voxel, Vector3.LEFT): voxelSides += Faces.Left
+			if face_is_visible(voxel, Vector3.RIGHT): voxelSides += Faces.Right
+			if face_is_visible(voxel, Vector3.BACK): voxelSides += Faces.Front
+			if face_is_visible(voxel, Vector3.FORWARD): voxelSides += Faces.Back
+			
+			var surface_index = voxel_data[voxel];
+			var color = vox.colors[surface_index];
+			var material = vox.materials[surface_index].get_material(color);
+			gen.ensure_surface_exists(surface_index, color, material);
+	
+			for t in voxelSides:
+				gen.add_vertex(surface_index, vox_to_godot.xform((t + voxel) * scale));
+	
+		return gen.combine_surfaces();
