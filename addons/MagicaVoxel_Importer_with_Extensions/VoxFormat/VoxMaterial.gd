@@ -16,6 +16,9 @@ func get_roughness(): return float(properties["_rough"]);
 var flux setget ,get_flux;
 func get_flux(): return float(properties["_flux"]);
 
+var refraction setget ,get_refraction;
+func get_refraction(): return float(properties["_ior"]);
+
 func _init(properties):
 	self.properties = properties;
 
@@ -42,7 +45,8 @@ func get_material(color: Color):
 			material.flags_transparent = true;
 			material.albedo_color = Color(1, 1, 1, 1 - self.weight);
 			material.refraction_enabled = true;
-			material.refraction_scale = 0.5;
+			material.refraction_scale = self.refraction * 0.01;
+			material.roughness = self.roughness;
 		"_diffuse", _:
 			material.roughness = 1;
 	return material;

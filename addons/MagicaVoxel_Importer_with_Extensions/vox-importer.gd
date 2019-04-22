@@ -7,7 +7,7 @@ const VoxData = preload("./VoxFormat/VoxData.gd");
 const VoxNode = preload("./VoxFormat/VoxNode.gd");
 const VoxMaterial = preload("./VoxFormat/VoxMaterial.gd");
 
-const debug_file = true;
+const debug_file = false;
 const debug_models = false;
 
 func _init():
