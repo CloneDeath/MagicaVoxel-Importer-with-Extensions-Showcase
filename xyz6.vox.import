@@ -12,3 +12,4 @@ dest_files=[ "res://.import/xyz6.vox-60aa9a7d89cb144722dacc82103d3fef.mesh" ]
 [params]
 
 Scale=0.167
+GreedyMeshGenerator=true
