@@ -34,7 +34,7 @@ func get_preset_count():
 
 func get_preset_name(_preset):
 	return 'Default'
-	
+
 func get_import_options(_preset):
 	return [
 		{
@@ -55,34 +55,34 @@ func import(source_path, destination_path, options, _platforms, _gen_files):
 	if options.Scale:
 		scale = float(options.Scale)
 	var greedy = true
-	if options.GreedyMeshGenerator:
+	if options.has("GreedyMeshGenerator"):
 		greedy = bool(options.GreedyMeshGenerator)
-	
+
 	var file = File.new()
 	var err = file.open(source_path, File.READ)
 
 	if err != OK:
 		if file.is_open(): file.close()
 		return err
-	
+
 	var identifier = PoolByteArray([ file.get_8(), file.get_8(), file.get_8(), file.get_8() ]).get_string_from_ascii()
 	var version = file.get_32()
-	print('Importing: ', source_path, ' (scale: ', scale, ', file version: ', version, ')');
-	
+	print('Importing: ', source_path, ' (scale: ', scale, ', file version: ', version, ', greedy mesh: ', greedy, ')');
+
 	var vox = VoxData.new();
 	if identifier == 'VOX ':
 		var voxFile = VoxFile.new(file);
 		while voxFile.has_data_to_read():
 			read_chunk(vox, voxFile);
 	file.close()
-	
+
 	var voxel_data = unify_voxels(vox).data;
 	var mesh
 	if greedy:
 		mesh = GreedyMeshGenerator.new().generate(vox, voxel_data, scale)
 	else:
 		mesh = CulledMeshGenerator.new().generate(vox, voxel_data, scale)
-	
+
 	var full_path = "%s.%s" % [ destination_path, get_save_extension() ]
 	return ResourceSaver.save(full_path, mesh)
 
@@ -105,11 +105,11 @@ func byte_to_basis(data: int):
 	result.x[0] = x_sign if x_ind == 0 else 0;
 	result.x[1] = x_sign if x_ind == 1 else 0;
 	result.x[2] = x_sign if x_ind == 2 else 0;
-	
+
 	result.y[0] = y_sign if y_ind == 0 else 0;
 	result.y[1] = y_sign if y_ind == 1 else 0;
 	result.y[2] = y_sign if y_ind == 2 else 0;
-	
+
 	result.z[0] = z_sign if z_ind == 0 else 0;
 	result.z[1] = z_sign if z_ind == 1 else 0;
 	result.z[2] = z_sign if z_ind == 2 else 0;
@@ -155,14 +155,14 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			var attributes = file.get_vox_dict();
 			var node = VoxNode.new(node_id, attributes);
 			vox.nodes[node_id] = node;
-			
+
 			var child = file.get_32();
 			node.child_nodes.append(child);
-			
+
 			file.get_buffer(8);
 			var num_of_frames = file.get_32();
-			
-			if debug_file: 
+
+			if debug_file:
 				print('nTRN[', node_id, '] -> ', child);
 				if (!attributes.empty()): print('\t', attributes);
 			for _frame in range(num_of_frames):
@@ -180,11 +180,11 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			var attributes = file.get_vox_dict();
 			var node = VoxNode.new(node_id, attributes);
 			vox.nodes[node_id] = node;
-			
+
 			var num_children = file.get_32();
 			for _c in num_children:
 				node.child_nodes.append(file.get_32());
-			if debug_file: 
+			if debug_file:
 				print('nGRP[', node_id, '] -> ', node.child_nodes);
 				if (!attributes.empty()): print('\t', attributes);
 		'nSHP':
@@ -192,19 +192,19 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			var attributes = file.get_vox_dict();
 			var node = VoxNode.new(node_id, attributes);
 			vox.nodes[node_id] = node;
-			
+
 			var num_models = file.get_32();
 			for _i in range(num_models):
 				node.models.append(file.get_32());
 				file.get_vox_dict();
-			if debug_file: 
+			if debug_file:
 				print('nSHP[', node_id,'] -> ', node.models);
 				if (!attributes.empty()): print('\t', attributes);
 		'MATL':
 			var material_id = file.get_32() - 1;
 			var properties = file.get_vox_dict();
 			vox.materials[material_id] = VoxMaterial.new(properties);
-			if debug_file: 
+			if debug_file:
 				print("MATL ", material_id);
 				print("\t", properties);
 		_:
@@ -217,16 +217,16 @@ func unify_voxels(vox: VoxData):
 
 class VoxelData:
 	var data = {};
-	
+
 	func combine(model):
 		var offset = (model.size / 2.0).floor();
 		for voxel in model.voxels:
 			data[voxel - offset] = model.voxels[voxel];
-	
+
 	func combine_data(other):
 		for voxel in other.data:
 			data[voxel] = other.data[voxel];
-	
+
 	func rotate(basis: Basis):
 		var new_data = {};
 		for voxel in data:
@@ -234,7 +234,7 @@ class VoxelData:
 			var new_voxel = (basis.xform(voxel+half_step)-half_step).floor();
 			new_data[new_voxel] = data[voxel];
 		data = new_data;
-	
+
 	func translate(translation: Vector3):
 		var new_data = {};
 		for voxel in data:
