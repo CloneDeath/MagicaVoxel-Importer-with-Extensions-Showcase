@@ -12,3 +12,4 @@ dest_files=[ "res://.import/material_rod.vox-977dfe4a42da07fae832e48afa95d50d.me
 [params]
 
 Scale=0.1
+GreedyMeshGenerator=true
