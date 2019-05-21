@@ -4,6 +4,7 @@ extends EditorImportPlugin
 const VoxFile = preload("./VoxFile.gd");
 const VoxData = preload("./VoxFormat/VoxData.gd");
 const VoxNode = preload("./VoxFormat/VoxNode.gd");
+const VoxMaterial = preload("./VoxFormat/VoxMaterial.gd");
 const CulledMeshGenerator = preload("./CulledMeshGenerator.gd");
 const GreedyMeshGenerator = preload("./GreedyMeshGenerator.gd");
 
@@ -174,7 +175,6 @@ func read_chunk(vox: VoxData, file: VoxFile):
 					var rot = frame_attributes['_r'];
 					node.rotation = byte_to_basis(int(rot));
 					if debug_file: print('\tR: ', node.rotation);
-			
 		'nGRP':
 			var node_id = file.get_32();
 			var attributes = file.get_vox_dict();
@@ -200,6 +200,15 @@ func read_chunk(vox: VoxData, file: VoxFile):
 			if debug_file: 
 				print('nSHP[', node_id,'] -> ', node.models);
 				if (!attributes.empty()): print('\t', attributes);
+		'MATL':
+			var material_id = file.get_32() - 1;
+			var properties = file.get_vox_dict();
+			vox.materials[material_id] = VoxMaterial.new(properties);
+			if debug_file: 
+				print("MATL ", material_id);
+				print("\t", properties);
+		_:
+			if debug_file: print(chunk_id);
 	file.read_remaining();
 
 func unify_voxels(vox: VoxData):
